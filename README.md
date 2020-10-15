@@ -1,5 +1,5 @@
 # music-cover-view
-A rotating disc view with album art for your music player applications
+A rotating disc view with album art for your music player applications. It is lifecycle aware hence will automatically stop and restart with the activity/fragment lifecycle.
 
 ## Setup
 
@@ -31,6 +31,8 @@ Import the lib module into your project
  - ```app:ringWidth``` - width of the ring near the outer stroke
  - ```app:strokeColor``` - color of the outer stroke and inner solid center
  - ```app:strokeWidth``` - width of the outer stroke and inner solid center
+ 
+ You can also update these attributes from your activity/fragment
  
  ## Methods
  
