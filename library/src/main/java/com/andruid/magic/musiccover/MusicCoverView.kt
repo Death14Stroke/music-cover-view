@@ -10,18 +10,48 @@ import android.util.AttributeSet
 import android.view.View
 import android.view.animation.LinearInterpolator
 import androidx.core.view.setPadding
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.OnLifecycleEvent
 import com.google.android.material.imageview.ShapeableImageView
 import com.google.android.material.shape.ShapeAppearanceModel
+import kotlin.properties.Delegates.observable
 
 class MusicCoverView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
-) : ShapeableImageView(context, attrs, defStyleAttr) {
+) : ShapeableImageView(context, attrs, defStyleAttr), LifecycleObserver {
     private val a =
         context.obtainStyledAttributes(attrs, R.styleable.MusicCoverView, defStyleAttr, 0)
 
-    private val ringColor = a.getColor(R.styleable.MusicCoverView_ringColor, Color.RED)
-    private val strokeColor = a.getColor(R.styleable.MusicCoverView_strokeColor, Color.BLACK)
-    private val ringWidth = a.getDimension(R.styleable.MusicCoverView_ringWidth, 5f)
+    var ringColor: Int by observable(
+        a.getColor(
+            R.styleable.MusicCoverView_ringColor,
+            Color.RED
+        )
+    ) { _, _, color ->
+        ringColorPaint.color = color
+        invalidate()
+    }
+
+    var strokeColor: Int by observable(
+        a.getColor(
+            R.styleable.MusicCoverView_strokeColor,
+            Color.BLACK
+        )
+    ) { _, _, color ->
+        solidPaint.color = color
+        invalidate()
+    }
+
+    var ringWidth by observable(
+        a.getDimension(
+            R.styleable.MusicCoverView_ringWidth,
+            5f
+        )
+    ) { _, _, _ ->
+        invalidate()
+    }
 
     init {
         strokeWidth = a.getDimension(R.styleable.MusicCoverView_strokeWidth, 20f)
@@ -30,6 +60,8 @@ class MusicCoverView @JvmOverloads constructor(
         shapeAppearanceModel =
             ShapeAppearanceModel.builder(context, 0, R.style.CircleImageView).build()
         setPadding(strokeWidth.toInt())
+
+        (context as LifecycleOwner).lifecycle.addObserver(this)
     }
 
     private val solidPaint = Paint().apply {
@@ -45,13 +77,17 @@ class MusicCoverView @JvmOverloads constructor(
         this.strokeWidth = strokeWidth
     }
 
-    private val rotateAnimator = ObjectAnimator.ofFloat(
-        this,
-        View.ROTATION, 0f, 360f
-    ).apply {
+    private val rotateAnimator = ObjectAnimator.ofFloat(this, View.ROTATION, 0f, 360f).apply {
         duration = 5000
         repeatCount = INFINITE
         interpolator = LinearInterpolator()
+    }
+
+    var isPlaying by observable(false) { _, _, play ->
+        if (play)
+            play()
+        else
+            pause()
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -70,16 +106,26 @@ class MusicCoverView @JvmOverloads constructor(
         canvas.drawCircle(cx, cy, cx - 2 * strokeWidth, ringColorPaint)
     }
 
-    fun play() {
+    private fun play() {
         if (!rotateAnimator.isStarted)
             rotateAnimator.start()
         else
             rotateAnimator.resume()
     }
 
-    fun pause() {
+    private fun pause() {
         rotateAnimator.pause()
     }
 
-    fun isPlaying() = rotateAnimator.isStarted && !rotateAnimator.isPaused
+    @OnLifecycleEvent(Lifecycle.Event.ON_START)
+    private fun onStart() {
+        if (isPlaying)
+            play()
+    }
+
+    @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
+    private fun onStop() {
+        if (isPlaying)
+            pause()
+    }
 }

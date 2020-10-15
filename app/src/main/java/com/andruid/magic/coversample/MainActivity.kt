@@ -1,9 +1,12 @@
 package com.andruid.magic.coversample
 
+import android.graphics.Color
 import android.os.Bundle
-import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.andruid.magic.coversample.databinding.ActivityMainBinding
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
@@ -14,11 +17,14 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         binding.playBtn.setOnClickListener {
-            Log.d("animLog", "isPlaying = ${binding.cover.isPlaying()}")
-            if (binding.cover.isPlaying())
-                binding.cover.pause()
-            else
-                binding.cover.play()
+            binding.cover.isPlaying = !binding.cover.isPlaying
+        }
+
+        lifecycleScope.launch {
+            delay(5000)
+            binding.cover.strokeColor = Color.GREEN
+            delay(3000)
+            binding.cover.ringColor = Color.YELLOW
         }
     }
 }
